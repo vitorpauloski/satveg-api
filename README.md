@@ -7,7 +7,7 @@
 ```python
 >>> import satveg_api
 >>> serie = satveg_api.Series('SEU_TOKEN_DA_API_SATVEG')
->>> serie.get(-18.92803,-40.09281)
+>>> serie.get_json(-18.92803, -40.09281)
 {
   'success': True,
   'status_code': 200,
@@ -17,6 +17,9 @@
     'listaDatas': ['2000-02-18', ..., '2022-06-26']
   }
 }
+
+>>> serie.get(-18.92803, -40.09281, label='Café')
+'pandas.core.frame.DataFrame'
 
 >>> df = serie.from_csv('input.csv')
 'pandas.core.frame.DataFrame'

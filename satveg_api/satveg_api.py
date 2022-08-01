@@ -31,7 +31,7 @@ class Series:
         self.filter_parameter = filter_parameter
         self.url = 'https://api.cnptia.embrapa.br/satveg/v1/series'
 
-    def get(self, latitude:float, longitude:float) -> dict:
+    def get_json(self, latitude:float, longitude:float) -> dict:
         """Retorna os perfis temporais dos índices vegetativos NDVI ou EVI para um ponto informado.
 
         Args:
@@ -97,8 +97,47 @@ class Series:
                 'data': {}
             }
 
+    def get(self, latitude:float, longitude:float, label:str=None) -> pandas.DataFrame:
+        """Retorna os perfis temporais dos índices vegetativos NDVI ou EVI para um ponto informado no formato Pandas.DataFrame.
+
+        Args:
+            latitude (float): latitude decimal do ponto no sistema de referência EPSG 4326.
+
+            longitude (float): longitude decimal do ponto no sistema de referência EPSG 4326.
+
+            label (str): label da cultura existente no terreno.
+
+        Returns:
+            pandas.DataFrame
+        """
+
+        if label is None:
+            input = {
+                'latitude': [latitude],
+                'longitude': [longitude],
+            }
+        else:
+            input = {
+                'label': [label],
+                'latitude': [latitude],
+                'longitude': [longitude],
+            }
+
+        input_df = pandas.DataFrame(input)
+
+        response = []
+
+        for coordinates in input_df.itertuples():
+            response.append(self.get_json(coordinates.latitude, coordinates.longitude))
+
+        response_data = pandas.DataFrame(response)
+        response_data = response_data.join(response_data['data'].apply(pandas.Series))
+        response_data = response_data.drop('data', axis=1)
+
+        return input_df.join(response_data)
+
     def from_csv(self, file:str, delimiter:str=';') -> pandas.DataFrame:
-        """Retorna os perfis temporais dos índices vegetativos NDVI ou EVI para os ponto informados no arquivo csv.
+        """Retorna os perfis temporais dos índices vegetativos NDVI ou EVI para os pontos informados no arquivo csv.
 
         Args:
             file (str): Caminho do arquivo csv.
@@ -112,7 +151,7 @@ class Series:
         response = []
 
         for coordinates in input_data.itertuples():
-            response.append(self.get(coordinates.latitude, coordinates.longitude))
+            response.append(self.get_json(coordinates.latitude, coordinates.longitude))
 
         response_data = pandas.DataFrame(response)
         response_data = response_data.join(response_data['data'].apply(pandas.Series))
